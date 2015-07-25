@@ -46,17 +46,90 @@ Elm.Native.ParseExpression.make = function(localRuntime) {
     return Mul(e1, Pow(e2, -1));
   }
 
-  function convert(node) {
+  // Returns a float corresponding to the node's value if the node is a numeric literal.
+  // Otherwise throws an error
+  function evalAsNumericLiteral(node) {
     switch (node.type) {
+      case 'UnaryExpression':
+        if (node.operator === '-') {
+          return -evalAsNumericLiteral(node.argument);
+        } else {
+          throw { description : 'Unknown unary operator' }
+        }
+        break;
+
+      case 'Literal':
+        if (typeof(node.value) === 'number') {
+          return node.value;
+        } else {
+          throw { description : 'Got non-numeric literal' };
+        }
+        break;
+
+      default:
+        throw { description : 'Could not evaluate as number.' };
+    }
+  }
+
+  function convert(node) {
+    var literal;
+    try { literal = evalAsNumericLiteral(node); }
+    catch (err) { }
+
+    if (typeof(literal) === 'number') {
+      return Constant(literal);
+    }
+
+    switch (node.type) {
+      case 'Identifier':
+        return Var(node.name);
+        break;
+
+      case 'CallExpression':
+        if (node.callee.type === 'Identifier' && node.callee.name == 'log') {
+          if (node.arguments.length === 1) {
+            return LogBase(Math.E, convert(node.arguments[0]));
+          } else if (node.arguments.length === 2) {
+            // The first argument is the base.
+            return LogBase(evalAsNumericLiteral(node.arguments[0]), convert(node.arguments[1]));
+          } else {
+            throw { description : 'log got too many arguments' };
+          }
+        } else {
+          throw { description : 'Unknown function' }
+        }
+        break;
+
       case 'BinaryExpression':
         switch (node.operator) {
           case '+':
+            return Add(convert(node.left), convert(node.right));
             break;
 
           case '*':
+            return Mul(convert(node.left), convert(node.right));
+            break;
+
+          case '-':
+            return Sub(convert(node.left), convert(node.right));
+            break;
+
+          case '/':
+            return Div(convert(node.left), convert(node.right));
             break;
 
           case '^':
+            try {
+              var base = evalAsNumericLiteral(node.left);
+              return Exp(base, convert(node.right));
+            } catch (err1) {
+              try {
+                var power = evalAsNumericLiteral(node.right);
+                return Pow(convert(node.left), power);
+              } catch (err2) {
+                throw { description : 'One argument to ^ must be a constant' };
+              }
+            }
             break;
 
           default:
@@ -74,9 +147,12 @@ Elm.Native.ParseExpression.make = function(localRuntime) {
       var expr = convert(jsep(s));
       return { ctor : 'Ok', '_0': expr }
     } catch (e) {
+      console.log(e);
       return { ctor : 'Err', '_0': e.description }
     }
   }
+
+  window.parse = parse;
 
   return localRuntime.Native.ParseExpression.values = {
     parse : parse
