@@ -1,14 +1,13 @@
 {
     "version": "1.0.0",
-    "summary": "Symbolic differentiation for javascript",
-    "repository": "https://github.com/imeckler/elm-calculus.git",
+    "summary": "An expression type and symbolic differentiation",
+    "repository": "https://github.com/imeckler/expression.git",
     "license": "BSD3",
     "source-directories": [
         "."
     ],
-    "exposed-modules": [],
+    "exposed-modules": [ "Expression" ],
     "dependencies": {
-        "Dandandan/parser": "5.1.0 <= v < 6.0.0",
         "elm-lang/core": "2.1.0 <= v < 3.0.0"
     },
     "elm-version": "0.15.0 <= v < 0.16.0",

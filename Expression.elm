@@ -4,6 +4,7 @@ module Expression
   , evaluate
   , evaluateExn
   , parse
+  , derivative
   ) where
 
 import Dict
@@ -81,8 +82,8 @@ evaluateExn expr env =
     Pow e1 p ->
       (evaluateExn e1 env) ^ p
 
-derivative : Expression -> String -> Expression
-derivative expr x =
+derivative : String -> Expression -> Expression
+derivative x expr =
   case expr of
     Var y ->
       if y == x then Constant 1 else Constant 0
@@ -90,20 +91,20 @@ derivative expr x =
     Constant _ -> Constant 0
 
     Mul e1 e2 ->
-      Add (Mul e1 (derivative e2)) (Mul (derivative e1) e2)
+      Add (Mul e1 (derivative x e2)) (Mul (derivative x e1) e2)
 
     Add e1 e2 ->
-      Add (derivative e1) (derivative e2)
+      Add (derivative x e1) (derivative x e2)
 
     LogBase b e1 ->
-      let d = derivative e1 in
+      let d = derivative x e1 in
       Mul d (Pow (Mul (Constant (logBase e b)) e1) (-1))
 
     Exp b e1 ->
-      let d = derivative e1 in
+      let d = derivative x e1 in
       Mul (Constant (logBase e b)) (Mul d expr)
 
     Pow e1 p ->
-      Mul (derivative e1)
+      Mul (derivative x e1)
         (Mul (Constant p) (Pow e1 (p - 1)))
 
