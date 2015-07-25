@@ -7,9 +7,26 @@ module Expression
   , derivative
   ) where
 
+{-| A type for simple mathematical expressions.
+
+# Types
+@docs Expression, Environment
+
+# Parsing
+@docs parse
+
+# Evaluation
+@docs evaluate, evaluateExn
+
+# Differentiation
+@docs derivative
+-}
+
 import Dict
 import Maybe
 import Native.ParseExpression
+
+-- TODO: Add sin, cos, tan, cosh, sinh, tanh
 
 type Expression
   = Var String
@@ -20,8 +37,11 @@ type Expression
   | Exp Float Expression
   | Pow Expression Float
 
+
+{-| An environment of values for variables to be used in evaluating an expression. -}
 type alias Environment = Dict.Dict String Float
 
+{-| Parse an expression from a string. -}
 parse : String -> Result String Expression
 parse = Native.ParseExpression.parse
 
@@ -34,6 +54,7 @@ maybeMap2 f ma mb =
         Nothing -> Nothing
     Nothing -> Nothing
 
+{-| Evaluate an expression in the given environment, returning `Nothing` if a variable is not found. -}
 evaluate : Expression -> (Environment -> Maybe Float)
 evaluate expr env =
   case expr of
@@ -58,6 +79,7 @@ evaluate expr env =
     Pow e1 p ->
       Maybe.map (\x -> x ^ p) (evaluate e1 env)
 
+{-| Evaluate an expression in the given environment, throwing an exception if a variable is not found. -}
 evaluateExn : Expression -> (Environment -> Float)
 evaluateExn expr env =
   case expr of
@@ -82,6 +104,7 @@ evaluateExn expr env =
     Pow e1 p ->
       (evaluateExn e1 env) ^ p
 
+{-| Take the derivative of an expression with respect to the given variable. -}
 derivative : String -> Expression -> Expression
 derivative x expr =
   case expr of
