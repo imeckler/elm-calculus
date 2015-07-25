@@ -3,6 +3,7 @@
 
 Elm.Native.ParseExpression = {};
 Elm.Native.ParseExpression.make = function(localRuntime) {
+
   localRuntime.Native = localRuntime.Native || {};
   localRuntime.Native.ParseExpression = localRuntime.Native.ParseExpression || {};
 
@@ -147,8 +148,8 @@ Elm.Native.ParseExpression.make = function(localRuntime) {
       var expr = convert(jsep(s));
       return { ctor : 'Ok', '_0': expr }
     } catch (e) {
-      console.log(e);
-      return { ctor : 'Err', '_0': e.description }
+      var desc = typeof(e.description) === 'string' ? e.description : 'Unknown error';
+      return { ctor : 'Err', '_0': desc }
     }
   }
 

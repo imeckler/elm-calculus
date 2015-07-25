@@ -3,15 +3,35 @@ module Expression
   , Environment
   , evaluate
   , evaluateExn
+  , parse
   ) where
 
 import Dict
 import Maybe
-import Expression.Type
+import Native.ParseExpression
 
-type alias Environment = Map String Float
+type Expression
+  = Var String
+  | Constant Float
+  | Mul Expression Expression
+  | Add Expression Expression
+  | LogBase Float Expression
+  | Exp Float Expression
+  | Pow Expression Float
+
+type alias Environment = Dict.Dict String Float
+
+parse : String -> Result String Expression
+parse = Native.ParseExpression.parse
 
 maybeMap2 : (a -> b -> c) -> Maybe a -> Maybe b -> Maybe c
+maybeMap2 f ma mb =
+  case ma of
+    Just a ->
+      case mb of
+        Just b -> Just (f a b)
+        Nothing -> Nothing
+    Nothing -> Nothing
 
 evaluate : Expression -> (Environment -> Maybe Float)
 evaluate expr env =
@@ -28,7 +48,7 @@ evaluate expr env =
     Add e1 e2 ->
       maybeMap2 (+) (evaluate e1 env) (evaluate e2 env)
 
-    Log b e1 ->
+    LogBase b e1 ->
       Maybe.map (logBase b) (evaluate env e1)
 
     Exp b e1 ->
@@ -52,7 +72,7 @@ evaluateExn expr env =
     Add e1 e2 ->
       evaluate e1 env + evaluate e2 env
 
-    Log b e1 ->
+    LogBase b e1 ->
       logBase b (evaluate env e1)
 
     Exp b e1 ->
